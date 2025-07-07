@@ -1,0 +1,56 @@
+[
+  {
+    "id": "todo-1",
+    "content": "Replace execSync('echo ... > ...') with fs.writeFileSync for writing context files in index.ts.",
+    "status": "pending",
+    "dependencies": []
+  },
+  {
+    "id": "todo-2",
+    "content": "Import and use node-fetch explicitly for fetch requests in index.ts.",
+    "status": "pending",
+    "dependencies": []
+  },
+  {
+    "id": "todo-3",
+    "content": "Define a TypeScript type/interface for the generation object in index.ts for better type safety.",
+    "status": "pending",
+    "dependencies": []
+  },
+  {
+    "id": "todo-4",
+    "content": "Improve error handling and cleanup logic in index.ts to ensure proper directory cleanup even if process.chdir is used.",
+    "status": "pending",
+    "dependencies": []
+  },
+  {
+    "id": "todo-5",
+    "content": "Add JSDoc comments and inline comments for main functions and complex logic in index.ts.",
+    "status": "pending",
+    "dependencies": []
+  },
+  {
+    "id": "todo-6",
+    "content": "Check for directory existence before creating a new project directory in index.ts.",
+    "status": "pending",
+    "dependencies": []
+  },
+  {
+    "id": "todo-7",
+    "content": "Add a check for Node.js version compatibility at the start of index.ts (optional, but recommended for CLI tools).",
+    "status": "pending",
+    "dependencies": []
+  },
+  {
+    "id": "todo-8",
+    "content": "Add 'files', 'repository', and 'engines' fields to package.json for best publishing practices.",
+    "status": "pending",
+    "dependencies": []
+  },
+  {
+    "id": "todo-9",
+    "content": "Add a note in README.md acceptance criteria about offline support for default templates.",
+    "status": "pending",
+    "dependencies": []
+  }
+]
