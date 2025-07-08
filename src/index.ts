@@ -335,6 +335,8 @@ async function main() {
       chalk.gray("- Initializing shadcn/ui... (This may take a moment)"),
     );
     execSync("pnpm dlx shadcn@latest init", { stdio: "inherit" });
+    execSync("pnpm add next@latest react@latest react-dom@latest", { stdio: "inherit" });
+    execSync("rm -rf .next node_modules pnpm-lock.yaml && pnpm install", { stdio: "inherit" });
 
     // 7. Print Next Steps
     console.log(
