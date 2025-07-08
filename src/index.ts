@@ -2,7 +2,7 @@ import prompts, { PromptObject } from "prompts";
 import { execSync } from "child_process";
 import { copySync, emptyDirSync } from "fs-extra";
 import path from "path";
-import chalk from "chalk"; // For colorful output
+import chalk from "chalk";
 import fs from "fs";
 import fetch from "node-fetch";
 
@@ -15,7 +15,7 @@ interface Generation {
   documentType: string;
   files?: string;
   createdAt?: string;
-  sourceId?: string; // For anonymous generations
+  sourceId?: string;
 }
 
 /**
@@ -43,7 +43,6 @@ export { parseArgs };
  * Main CLI function that handles the scaffolding process
  */
 async function main() {
-  console.log('[DEBUG] CLI main() started');
   const cliArgs = parseArgs();
   const isNonInteractive = !!cliArgs.yes || (!!cliArgs.email && !!cliArgs.project) || !!cliArgs['source-id'] || (!!cliArgs.generate && !!cliArgs.description && !cliArgs.email);
 
@@ -67,8 +66,6 @@ async function main() {
     
     if (sourceId) {
       contextMode = 'retrieve_source';
-      // Flow: Retrieve by sourceId (highest priority)
-      // This will be handled later in the logic
     } else if (cliArgs.email) {
       contextMode = 'import_auth';
       fetchGenerations = true;
@@ -78,14 +75,13 @@ async function main() {
       generateNewContext = true;
       contextDescription = typeof cliArgs.description === 'string' ? cliArgs.description : '';
     } else {
-      // No context flags provided: default to template mode
       contextMode = 'template';
     }
 
   } else {
     // Interactive mode
     console.log(chalk.blue("✨ Welcome to the MyContext App Scaffolder! ✨"));
-    // 1. Prompt for project name and type
+    
     const questions: PromptObject<any>[] = [];
     if (!cliArgs.name) {
       questions.push({
@@ -96,11 +92,9 @@ async function main() {
           if (value.length === 0) {
             return "Please enter a project name.";
           }
-          // Check for invalid directory names
           if (value === "." || value === ".." || value.includes("/") || value.includes("\\")) {
             return "Please enter a valid project name (cannot be '.' or '..' and cannot contain path separators).";
           }
-          // Check for other invalid characters
           if (/[<>:"|?*]/.test(value)) {
             return "Please enter a valid project name (cannot contain < > : \" | ? * characters).";
           }
@@ -108,6 +102,7 @@ async function main() {
         },
       });
     }
+    
     if (!cliArgs.type) {
       questions.push({
         type: "select",
@@ -115,14 +110,12 @@ async function main() {
         message: "What type of project do you want to create?",
         choices: [
           { title: "Full App (with full Next.js structure)", value: "full" },
-          {
-            title: "Landing Page (optimized for simple landing pages)",
-            value: "landing",
-          },
+          { title: "Landing Page (optimized for simple landing pages)", value: "landing" },
         ],
         initial: 0,
       });
     }
+    
     questions.push({
       type: "select",
       name: "contextSource",
@@ -135,6 +128,7 @@ async function main() {
       ],
       initial: 0,
     });
+    
     questions.push({
       type: (prev: string) => (prev === "generate_anon" ? "text" : null),
       name: "contextDescription",
@@ -144,11 +138,13 @@ async function main() {
           ? true
           : "Please provide a more detailed description (at least 10 characters).",
     });
+    
     questions.push({
-        type: (prev: string) => (prev === "retrieve_source" ? "text" : null),
-        name: "sourceId",
-        message: "Please enter your Source ID to retrieve context:",
+      type: (prev: string) => (prev === "retrieve_source" ? "text" : null),
+      name: "sourceId",
+      message: "Please enter your Source ID to retrieve context:",
     });
+    
     questions.push({
       type: (prev: string, values: any) =>
         values.contextSource === "import_auth" ? "text" : null,
@@ -159,17 +155,18 @@ async function main() {
           ? true
           : "Please enter a valid email address.",
     });
+    
     questions.push({
       type: (prev: string, values: any) =>
         values.contextSource === "import_auth" && !cliArgs.project ? "text" : null,
       name: "projectId",
-      message:
-        "Paste your Project ID (or leave blank to select interactively):",
+      message: "Paste your Project ID (or leave blank to select interactively):",
       validate: (value: string) =>
         value.length === 0 || /^[a-zA-Z0-9_-]+$/.test(value)
           ? true
           : "Invalid Project ID format.",
     });
+    
     const response = await prompts(questions);
     projectName = cliArgs.name ? String(cliArgs.name) : response.name;
     projectType = cliArgs.type ? String(cliArgs.type) : response.type;
@@ -179,8 +176,8 @@ async function main() {
       generateNewContext = true;
       contextDescription = response.contextDescription;
     } else if (response.contextSource === "retrieve_source") {
-        contextMode = 'retrieve_source';
-        sourceId = response.sourceId;
+      contextMode = 'retrieve_source';
+      sourceId = response.sourceId;
     } else if (response.contextSource === "import_auth") {
       contextMode = 'import_auth';
       fetchGenerations = true;
@@ -237,7 +234,8 @@ async function main() {
         initial: false,
       });
       if (!confirm.proceed) {
-        console.log(chalk.red('Aborted.')); process.exit(1);
+        console.log(chalk.red('Aborted.'));
+        process.exit(1);
       }
     }
   }
@@ -252,22 +250,18 @@ async function main() {
   );
 
   try {
-    // 2. Create Project Directory (skip if using current dir)
+    // Create Project Directory (skip if using current dir)
     if (!usingCurrentDir) {
       console.log(chalk.gray(`- Creating project directory: ${projectName}`));
       fs.mkdirSync(projectName, { recursive: true });
       process.chdir(projectName);
     }
 
-    // 3. Copy Template Files based on project type
+    // Copy Template Files based on project type
     console.log(chalk.gray(`- Copying ${projectType} template files...`));
     if (usingCurrentDir) {
-      // Debug: print all files in the template directory
       const templateFiles = fs.readdirSync(templatePath);
-      console.log('[DEBUG] Files in templatePath:', templateFiles);
-
       for (const file of templateFiles) {
-        console.log('[DEBUG] Copying', path.join(templatePath, file), 'to', path.join(projectPath, file));
         copySync(
           path.join(templatePath, file),
           path.join(projectPath, file),
@@ -278,11 +272,7 @@ async function main() {
       copySync(templatePath, projectPath, { overwrite: true });
     }
 
-    // Debug: print projectPath and its contents
-    console.log('[DEBUG] projectPath:', projectPath);
-    console.log('[DEBUG] Files in projectPath after copy:', fs.readdirSync(projectPath));
-
-    // --- Add this block to ensure package.json is present before install ---
+    // Ensure package.json is present before install
     const pkgPath = path.join(projectPath, 'package.json');
     let pkgTries = 0;
     while (!fs.existsSync(pkgPath) && pkgTries < 20) {
@@ -295,30 +285,27 @@ async function main() {
 
     // Ensure _my_context directory exists
     fs.mkdirSync(contextPath, { recursive: true });
-    emptyDirSync(contextPath); // Clear existing template context files if any
+    emptyDirSync(contextPath);
 
-    // 4. Inject context (generate/import/template)
+    // Inject context based on mode
     let didInjectContext = false;
     let injectedProjectId = projectId;
     let injectedSourceId = sourceId;
 
     if (contextMode === 'retrieve_source' && sourceId) {
-        console.log(chalk.gray(`- Fetching context for Source ID: ${sourceId}...`));
-        if (!sourceId) throw new Error('Source ID is required for retrieve_source mode.');
-        const files = await getContextBySourceId(sourceId);
-        for (const [fileName, content] of Object.entries(files)) {
-            fs.writeFileSync(path.join(contextPath, fileName), typeof content === 'string' ? content : String(content), 'utf8');
-        }
-        didInjectContext = true;
-        injectedSourceId = sourceId; // for logging
+      console.log(chalk.gray(`- Fetching context for Source ID: ${sourceId}...`));
+      const files = await getContextBySourceId(sourceId);
+      for (const [fileName, content] of Object.entries(files)) {
+        fs.writeFileSync(path.join(contextPath, fileName), typeof content === 'string' ? content : String(content), 'utf8');
+      }
+      didInjectContext = true;
+      injectedSourceId = sourceId;
+      
     } else if (contextMode === 'generate_anon' && generateNewContext && contextDescription) {
-      // Anonymous generation doesn't require verification for now
-      // Generate context
       console.log(chalk.gray('- Generating new context files anonymously...'));
-      if (!contextDescription) throw new Error('Context description is required for anonymous generation.');
       const generationResult = await generateAnonymousContext(contextDescription, projectType);
       const files = generationResult.files;
-      injectedSourceId = generationResult.sourceId; // Capture the new sourceId
+      injectedSourceId = generationResult.sourceId;
 
       for (const [fileName, content] of Object.entries(files)) {
         fs.writeFileSync(path.join(contextPath, fileName), typeof content === 'string' ? content : String(content), 'utf8');
@@ -326,7 +313,7 @@ async function main() {
       didInjectContext = true;
 
     } else if (contextMode === 'import_auth' && fetchGenerations && email) {
-      // Email verification (if not already verified)
+      // Email verification
       if (!verified) {
         if (!code) {
           await sendVerificationCode(email);
@@ -340,6 +327,7 @@ async function main() {
         }
         verified = true;
       }
+      
       // Fetch generations
       console.log(chalk.gray('- Fetching context files from mycontext.fbien.com...'));
       let generations = await getGenerations(email, projectId);
@@ -347,6 +335,7 @@ async function main() {
         console.log(chalk.red('No context generations found for this email/project. Exiting.'));
         process.exit(1);
       }
+      
       // If no projectId provided and multiple projects, prompt user to select
       if (!projectId) {
         const uniqueProjectIds = extractProjectIds(generations);
@@ -363,6 +352,7 @@ async function main() {
           injectedProjectId = uniqueProjectIds[0];
         }
       }
+      
       // Write all files from selected project
       for (const gen of generations) {
         if (gen.files) {
@@ -380,68 +370,66 @@ async function main() {
         }
       }
       didInjectContext = true;
+      
     } else if (contextMode === 'template') {
-      // Copy template context files (already done by template copy above, but ensure _my_context exists)
+      // Template mode - context directory is already set up
       if (!fs.existsSync(contextPath)) {
         fs.mkdirSync(contextPath, { recursive: true });
       }
-      // No-op: template context files are already present
       didInjectContext = true;
     }
-    // Print dashboard link if context was injected and projectId is available
+
+    // Print dashboard link if context was injected
     if (didInjectContext) {
-        if (injectedProjectId) {
-            console.log(chalk.green('\n✅ Authenticated context files generated successfully!'));
-      console.log(chalk.blueBright('\n🔗 Review your context files online:'));
-      const dashboardUrl = `https://mycontext.fbien.com/projects/${injectedProjectId}`;
-      console.log(chalk.underline(`${dashboardUrl}`));
-      console.log(chalk.gray('(cmd+click to open in supported terminals)'));
-        } else if (injectedSourceId) {
-            console.log(chalk.green('\n✅ Anonymous context files generated successfully!'));
-            console.log(chalk.yellowBright(`\n🔒 IMPORTANT: Save this Source ID to retrieve your context later.`));
-            console.log(chalk.white(`   Source ID: ${injectedSourceId}`));
-        }
-        console.log('\nOr, browse the _my_context/ folder in your project to see all generated files.\n');
+      if (injectedProjectId) {
+        console.log(chalk.green('\n✅ Authenticated context files generated successfully!'));
+        console.log(chalk.blueBright('\n🔗 Review your context files online:'));
+        const dashboardUrl = `https://mycontext.fbien.com/projects/${injectedProjectId}`;
+        console.log(chalk.underline(`${dashboardUrl}`));
+        console.log(chalk.gray('(cmd+click to open in supported terminals)'));
+      } else if (injectedSourceId) {
+        console.log(chalk.green('\n✅ Anonymous context files generated successfully!'));
+        console.log(chalk.yellowBright(`\n🔒 IMPORTANT: Save this Source ID to retrieve your context later.`));
+        console.log(chalk.white(`   Source ID: ${injectedSourceId}`));
+      }
+      console.log('\nOr, browse the _my_context/ folder in your project to see all generated files.\n');
     }
 
-   
-    // 6. Run shadcn/ui initialization
-    console.log(
-      chalk.gray("- Initializing shadcn/ui... (This may take a moment)"),
-    );
+    // Run shadcn/ui initialization
+    console.log(chalk.gray("- Initializing shadcn/ui... (This may take a moment)"));
     execSync("pnpm dlx shadcn@latest init", { stdio: "inherit" });
     execSync("pnpm add next@latest react@latest react-dom@latest", { stdio: "inherit" });
+    
+    // Remove duplicate page.js file if it exists to prevent duplicate page warnings
+    const pageJsPath = path.join(projectPath, "app", "page.js");
+    if (fs.existsSync(pageJsPath)) {
+      console.log(chalk.gray("- Removing duplicate page.js file..."));
+      fs.rmSync(pageJsPath, { force: true });
+    }
+    
     execSync("rm -rf .next node_modules pnpm-lock.yaml && pnpm install", { stdio: "inherit" });
 
-    // 7. Print Next Steps
-    console.log(
-      chalk.green(`\n🎉 Project ${projectName} created successfully! 🎉`),
-    );
+    // Print success message and next steps
+    console.log(chalk.green(`\n🎉 Project ${projectName} created successfully! 🎉`));
     console.log(chalk.white("\nNext steps:"));
     console.log(chalk.cyan(`  cd ${projectName}`));
     console.log(chalk.cyan("  pnpm dev"));
     console.log(chalk.white("\nHappy coding! 🚀"));
+    
   } catch (error: any) {
-    console.error(
-      chalk.red(`\nAn error occurred during scaffolding: ${error.message}`),
-    );
+    console.error(chalk.red(`\nAn error occurred during scaffolding: ${error.message}`));
+    
     // Clean up created directory if an error occurred during setup
     const currentDir = process.cwd();
     const expectedPath = path.join(path.dirname(currentDir), projectName);
     if (currentDir === expectedPath || currentDir.endsWith(projectName)) {
-      process.chdir(".."); // Move out of the newly created directory
-      console.log(
-        chalk.yellow(
-          `Attempting to clean up partially created directory: ${projectName}`,
-        ),
-      );
+      process.chdir("..");
+      console.log(chalk.yellow(`Attempting to clean up partially created directory: ${projectName}`));
       try {
         fs.rmSync(projectName, { recursive: true, force: true });
         console.log(chalk.yellow(`Cleaned up ${projectName}.`));
       } catch (cleanupError: any) {
-        console.error(
-          chalk.red(`Error during cleanup: ${cleanupError.message}`),
-        );
+        console.error(chalk.red(`Error during cleanup: ${cleanupError.message}`));
       }
     }
     process.exit(1);
@@ -469,29 +457,32 @@ function extractProjectIds(generations: Generation[]): string[] {
  * @returns Promise resolving to a Record of file names to content.
  */
 async function getContextBySourceId(sourceId: string): Promise<Record<string, string>> {
-    const url = `https://mycontext.fbien.com/api/generations/cli/${sourceId}`;
-    const headers = { "Content-Type": "application/json" };
+  const url = `https://mycontext.fbien.com/api/generations/cli/${sourceId}`;
+  const headers = { "Content-Type": "application/json" };
+  
+  try {
+    const response = await fetch(url, { headers });
+    const raw = await response.text();
+    let data;
+    
     try {
-        const response = await fetch(url, { headers });
-        const raw = await response.text();
-        let data;
-        try {
-            data = JSON.parse(raw);
-        } catch (jsonErr) {
-            console.error(chalk.red(`\n[API ERROR] Could not parse JSON from /api/generations/cli. Raw response:`));
-            console.error(raw);
-            throw new Error('API did not return valid JSON.');
-        }
-        if (!response.ok) {
-            throw new Error(data.error || `HTTP error! status: ${response.status}`);
-        }
-        return data.files || {};
-    } catch (error) {
-        console.error(chalk.red(`Failed to fetch context by Source ID: ${error}`));
-        throw error;
+      data = JSON.parse(raw);
+    } catch (jsonErr) {
+      console.error(chalk.red(`\n[API ERROR] Could not parse JSON from /api/generations/cli. Raw response:`));
+      console.error(raw);
+      throw new Error('API did not return valid JSON.');
     }
+    
+    if (!response.ok) {
+      throw new Error(data.error || `HTTP error! status: ${response.status}`);
+    }
+    
+    return data.files || {};
+  } catch (error) {
+    console.error(chalk.red(`Failed to fetch context by Source ID: ${error}`));
+    throw error;
+  }
 }
-
 
 /**
  * Fetches context generations for a given email (and optional project) from the mycontext.fbien.com API.
@@ -499,19 +490,19 @@ async function getContextBySourceId(sourceId: string): Promise<Record<string, st
  * @param project - Optional project ID to filter generations.
  * @returns Promise resolving to an array of Generation objects.
  */
-async function getGenerations(
-  email: string,
-  project?: string,
-): Promise<Generation[]> {
+async function getGenerations(email: string, project?: string): Promise<Generation[]> {
   let url = `https://mycontext.fbien.com/api/generations?email=${encodeURIComponent(email)}`;
   if (project) {
     url += `&project=${encodeURIComponent(project)}`;
   }
+  
   const headers = { "Content-Type": "application/json" };
+  
   try {
     const response = await fetch(url, { headers });
     const raw = await response.text();
     let data;
+    
     try {
       data = JSON.parse(raw);
     } catch (jsonErr) {
@@ -519,9 +510,11 @@ async function getGenerations(
       console.error(raw);
       throw new Error('API did not return valid JSON.');
     }
+    
     if (!response.ok) {
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
     }
+    
     return data.generations;
   } catch (error) {
     console.error(chalk.red(`Failed to fetch generations: ${error}`));
@@ -556,6 +549,7 @@ async function generateAnonymousContext(
 
     const raw = await response.text();
     let data;
+    
     try {
       data = JSON.parse(raw);
     } catch (jsonErr) {
@@ -569,7 +563,7 @@ async function generateAnonymousContext(
     }
 
     if (!data.sourceId || !data.files) {
-        throw new Error('API response did not include sourceId and files for anonymous generation.');
+      throw new Error('API response did not include sourceId and files for anonymous generation.');
     }
 
     return { files: data.files, sourceId: data.sourceId };
@@ -578,7 +572,6 @@ async function generateAnonymousContext(
     throw error;
   }
 }
-
 
 /**
  * Generates new context from a project description using the MyContext API.
@@ -610,6 +603,7 @@ async function generateContextFromDescription(
 
     const raw = await response.text();
     let data;
+    
     try {
       data = JSON.parse(raw);
     } catch (jsonErr) {
@@ -637,16 +631,19 @@ async function generateContextFromDescription(
 async function sendVerificationCode(email: string): Promise<boolean> {
   const url = "https://mycontext.fbien.com/api/send-verification-code";
   const headers = { "Content-Type": "application/json" };
+  
   try {
     const response = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify({ email }),
     });
+    
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
     }
+    
     return true;
   } catch (error) {
     console.error(chalk.red(`Failed to send verification code: ${error}`));
@@ -663,16 +660,19 @@ async function sendVerificationCode(email: string): Promise<boolean> {
 async function verifyCode(email: string, code: string): Promise<boolean> {
   const url = "https://mycontext.fbien.com/api/verify-code";
   const headers = { "Content-Type": "application/json" };
+  
   try {
     const response = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify({ email, code }),
     });
+    
     const data = await response.json();
     if (!response.ok) {
       return false;
     }
+    
     return data.verified === true;
   } catch (error) {
     console.error(chalk.red(`Failed to verify code: ${error}`));
