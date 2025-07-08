@@ -1,37 +1,45 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Zap, Shield, Rocket, Github, Twitter, FileText, Brain, Code } from "lucide-react";
+import { ArrowRight, Zap, Github, Twitter, FileText, Brain } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       {/* Navigation */}
-      <nav className="border-b mx-auto max-w-4xl bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-14 items-center justify-between">
+      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <div className="flex items-center space-x-2">
             <Brain className="h-6 w-6 text-primary" />
             <span className="font-bold text-xl">MyContext</span>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              Features
+          <div className="hidden md:flex items-center space-x-4">
+            <Button variant="ghost" size="sm" asChild>
+              <a href="#features">Features</a>
             </Button>
-            <Button variant="ghost" size="sm">
-              Pricing
+            <Button variant="ghost" size="sm" asChild>
+              <a href="https://mycontext.fbien.com/" target="_blank" rel="noopener noreferrer">Platform</a>
             </Button>
-            <Button variant="ghost" size="sm">
-              Docs
+            <Button variant="ghost" size="sm" asChild>
+              <a href="https://github.com/farajabien/create-my-context-app" target="_blank" rel="noopener noreferrer">Docs</a>
             </Button>
             <ThemeToggle />
-            <Button size="sm">Get Started</Button>
+            <Button size="sm" asChild>
+              <a href="#get-started">Get Started</a>
+            </Button>
+          </div>
+          <div className="flex md:hidden items-center space-x-2">
+            <ThemeToggle />
+            <Button size="sm" asChild>
+              <a href="#get-started">Get Started</a>
+            </Button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto py-24 md:py-32">
+      <section className="container mx-auto py-24 md:py-32 px-4" id="get-started">
         <div className="mx-auto max-w-4xl text-center">
           <Badge variant="secondary" className="mb-4">
             ✨ Published to npm! create-my-context-app is now available
@@ -46,16 +54,20 @@ export default function HomePage() {
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Instantly scaffold a Next.js app with best-practice architecture, AI-generated context, and a beautiful UI.
           </p>
-          <div className="bg-muted/50 rounded-lg p-4 mb-8 font-mono text-sm">
+          <div className="bg-muted/50 rounded-lg p-4 mb-8 font-mono text-sm overflow-x-auto">
             <span className="text-muted-foreground">$ </span>
             npx create-my-context-app --name my-app --generate --description "A SaaS for AI-driven project management."
           </div>
-          <div className="flex gap-4 justify-center">
-            <Button size="lg" className="gap-2">
-              Get Started <ArrowRight className="h-4 w-4" />
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" className="gap-2" asChild>
+              <a href="https://github.com/farajabien/create-my-context-app" target="_blank" rel="noopener noreferrer">
+                Get Started <ArrowRight className="h-4 w-4" />
+              </a>
             </Button>
-            <Button variant="outline" size="lg">
-              See a Live Demo
+            <Button variant="outline" size="lg" asChild>
+              <a href="https://mycontext.fbien.com/" target="_blank" rel="noopener noreferrer">
+                See a Live Demo
+              </a>
             </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-6">
@@ -69,7 +81,7 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="container mx-auto py-24">
+      <section className="container mx-auto py-24 px-4" id="features">
         <div className="mx-auto max-w-4xl text-center mb-16">
           <h2 className="text-3xl font-bold mb-4">The Ultimate Project Scaffolding CLI</h2>
           <p className="text-xl text-muted-foreground">
@@ -138,15 +150,17 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto py-24">
+      <section className="container mx-auto py-24 px-4">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to build your next project?</h2>
           <p className="text-xl text-muted-foreground mb-8">
             Join developers using AI-powered context generation to build faster
           </p>
-          <div className="flex gap-4 justify-center">
-            <Button size="lg" className="gap-2">
-              Start Building <ArrowRight className="h-4 w-4" />
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" className="gap-2" asChild>
+              <a href="https://github.com/farajabien/create-my-context-app" target="_blank" rel="noopener noreferrer">
+                Start Building <ArrowRight className="h-4 w-4" />
+              </a>
             </Button>
             <Button variant="outline" size="lg" asChild>
               <a href="https://mycontext.fbien.com/" target="_blank" rel="noopener noreferrer">
@@ -159,7 +173,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto py-8">
+        <div className="container mx-auto py-8 px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Brain className="h-5 w-5 text-primary" />
@@ -171,8 +185,10 @@ export default function HomePage() {
                   <Github className="h-4 w-4" />
                 </a>
               </Button>
-              <Button variant="ghost" size="sm">
-                <Twitter className="h-4 w-4" />
+              <Button variant="ghost" size="sm" asChild>
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
+                  <Twitter className="h-4 w-4" />
+                </a>
               </Button>
             </div>
           </div>
