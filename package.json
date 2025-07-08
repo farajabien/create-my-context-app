@@ -1,6 +1,6 @@
 {
   "name": "create-my-context-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A CLI to bootstrap context-driven Next.js projects.",
   "main": "bin/index.js",
   "bin": {
@@ -24,7 +24,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fbien/create-my-context-app.git"
+    "url": "https://github.com/farajabien/create-my-context-app.git"
   },
   "packageManager": "pnpm@10.11.0",
   "dependencies": {

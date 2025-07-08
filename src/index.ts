@@ -293,10 +293,10 @@ async function main() {
     if (didInjectContext) {
         if (injectedProjectId) {
             console.log(chalk.green('\n✅ Authenticated context files generated successfully!'));
-            console.log(chalk.blueBright('\n🔗 Review your context files online:'));
-            const dashboardUrl = `https://mycontext.fbien.com/projects/${injectedProjectId}`;
-            console.log(chalk.underline(`${dashboardUrl}`));
-            console.log(chalk.gray('(cmd+click to open in supported terminals)'));
+      console.log(chalk.blueBright('\n🔗 Review your context files online:'));
+      const dashboardUrl = `https://mycontext.fbien.com/projects/${injectedProjectId}`;
+      console.log(chalk.underline(`${dashboardUrl}`));
+      console.log(chalk.gray('(cmd+click to open in supported terminals)'));
         } else if (injectedSourceId) {
             console.log(chalk.green('\n✅ Anonymous context files generated successfully!'));
             console.log(chalk.yellowBright(`\n🔒 IMPORTANT: Save this Source ID to retrieve your context later.`));

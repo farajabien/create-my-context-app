@@ -150,7 +150,7 @@ npx create-my-context-app --email user@example.com --generate --description "...
 - **Troubleshooting:**
   - Missing template files? Ensure you're using the latest CLI version.
   - Email verification not working? Check your spam folder or try a different email.
-  - Still stuck? [Open an issue](https://github.com/fbien/create-my-context-app/issues)
+  - Still stuck? [Open an issue](https://github.com/farajabien/create-my-context-app/issues)
 
 ---
 
@@ -168,7 +168,7 @@ npx create-my-context-app --email user@example.com --generate --description "...
 - [shadcn/ui Components](https://ui.shadcn.com/docs/components)
 - [Tailwind CSS](https://tailwindcss.com/docs/installation)
 - [Project Dashboard](https://mycontext.fbien.com/projects)
-- [CLI Issues & Support](https://github.com/fbien/create-my-context-app/issues)
+- [CLI Issues & Support](https://github.com/farajabien/create-my-context-app/issues)
 
 ---
 
