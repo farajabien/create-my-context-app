@@ -43,6 +43,7 @@ export { parseArgs };
  * Main CLI function that handles the scaffolding process
  */
 async function main() {
+  console.log('[DEBUG] CLI main() started');
   const cliArgs = parseArgs();
   const isNonInteractive = !!cliArgs.yes || (!!cliArgs.email && !!cliArgs.project) || !!cliArgs['source-id'] || (!!cliArgs.generate && !!cliArgs.description && !cliArgs.email);
 
@@ -91,8 +92,20 @@ async function main() {
         type: "text",
         name: "name",
         message: "What is your project name?",
-        validate: (value: string) =>
-          value.length > 0 ? true : "Please enter a project name.",
+        validate: (value: string) => {
+          if (value.length === 0) {
+            return "Please enter a project name.";
+          }
+          // Check for invalid directory names
+          if (value === "." || value === ".." || value.includes("/") || value.includes("\\")) {
+            return "Please enter a valid project name (cannot be '.' or '..' and cannot contain path separators).";
+          }
+          // Check for other invalid characters
+          if (/[<>:"|?*]/.test(value)) {
+            return "Please enter a valid project name (cannot contain < > : \" | ? * characters).";
+          }
+          return true;
+        },
       });
     }
     if (!cliArgs.type) {
@@ -183,15 +196,50 @@ async function main() {
     process.exit(1);
   }
 
-  // Check if project directory already exists
-  const projectPath = path.join(process.cwd(), projectName);
-  if (fs.existsSync(projectPath)) {
+  // Handle '.' as current directory
+  let usingCurrentDir = false;
+  let projectPath = "";
+  if (projectName === ".") {
+    usingCurrentDir = true;
+    projectPath = process.cwd();
+    projectName = path.basename(process.cwd());
+  } else {
+    // Validate project name
+    if (projectName === ".." || projectName.includes("/") || projectName.includes("\\")) {
+      console.log(chalk.red("Error: Invalid project name. Cannot be '..' and cannot contain path separators."));
+      process.exit(1);
+    }
+    if (/[<>:"|?*]/.test(projectName)) {
+      console.log(chalk.red("Error: Invalid project name. Cannot contain < > : \" | ? * characters."));
+      process.exit(1);
+    }
+    projectPath = path.join(process.cwd(), projectName);
+  }
+
+  // Check if project directory already exists (unless using current dir)
+  if (!usingCurrentDir && fs.existsSync(projectPath)) {
     console.log(
       chalk.red(
         `Error: Directory '${projectName}' already exists. Please choose a different project name.`,
       ),
     );
     process.exit(1);
+  }
+
+  // If using current dir, check if not empty and warn (unless --yes)
+  if (usingCurrentDir) {
+    const files = fs.readdirSync(projectPath).filter(f => f !== ".DS_Store" && f !== ".git" && f !== "node_modules");
+    if (files.length > 0 && !cliArgs.yes) {
+      const confirm = await prompts({
+        type: 'confirm',
+        name: 'proceed',
+        message: `Current directory is not empty. Continue and scaffold into it?`,
+        initial: false,
+      });
+      if (!confirm.proceed) {
+        console.log(chalk.red('Aborted.')); process.exit(1);
+      }
+    }
   }
 
   const templatePath = path.join(__dirname, "../templates", projectType);
@@ -204,14 +252,46 @@ async function main() {
   );
 
   try {
-    // 2. Create Project Directory
-    console.log(chalk.gray(`- Creating project directory: ${projectName}`));
-    fs.mkdirSync(projectName, { recursive: true });
-    process.chdir(projectName);
+    // 2. Create Project Directory (skip if using current dir)
+    if (!usingCurrentDir) {
+      console.log(chalk.gray(`- Creating project directory: ${projectName}`));
+      fs.mkdirSync(projectName, { recursive: true });
+      process.chdir(projectName);
+    }
 
     // 3. Copy Template Files based on project type
     console.log(chalk.gray(`- Copying ${projectType} template files...`));
-    copySync(templatePath, process.cwd(), { overwrite: true });
+    if (usingCurrentDir) {
+      // Debug: print all files in the template directory
+      const templateFiles = fs.readdirSync(templatePath);
+      console.log('[DEBUG] Files in templatePath:', templateFiles);
+
+      for (const file of templateFiles) {
+        console.log('[DEBUG] Copying', path.join(templatePath, file), 'to', path.join(projectPath, file));
+        copySync(
+          path.join(templatePath, file),
+          path.join(projectPath, file),
+          { overwrite: true }
+        );
+      }
+    } else {
+      copySync(templatePath, projectPath, { overwrite: true });
+    }
+
+    // Debug: print projectPath and its contents
+    console.log('[DEBUG] projectPath:', projectPath);
+    console.log('[DEBUG] Files in projectPath after copy:', fs.readdirSync(projectPath));
+
+    // --- Add this block to ensure package.json is present before install ---
+    const pkgPath = path.join(projectPath, 'package.json');
+    let pkgTries = 0;
+    while (!fs.existsSync(pkgPath) && pkgTries < 20) {
+      await new Promise(res => setTimeout(res, 50));
+      pkgTries++;
+    }
+    if (!fs.existsSync(pkgPath)) {
+      throw new Error('package.json was not found after copying template files.');
+    }
 
     // Ensure _my_context directory exists
     fs.mkdirSync(contextPath, { recursive: true });
@@ -324,12 +404,7 @@ async function main() {
         console.log('\nOr, browse the _my_context/ folder in your project to see all generated files.\n');
     }
 
-    // 5. Install Dependencies (`pnpm install`)
-    console.log(
-      chalk.gray("- Installing dependencies... (This may take a moment)"),
-    );
-    execSync("pnpm install", { stdio: "inherit" });
-
+   
     // 6. Run shadcn/ui initialization
     console.log(
       chalk.gray("- Initializing shadcn/ui... (This may take a moment)"),

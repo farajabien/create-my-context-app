@@ -116,7 +116,8 @@
   },
   "exclude": [
     "node_modules",
-    "**/*.test.ts",
-    "templates"
+    "bin/templates",
+    "templates",
+    "**/*.test.ts"
   ]
 }
