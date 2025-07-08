@@ -1,236 +1,192 @@
-# Project Scaffolder Plan: `create-my-context-app`
+[![Powered by _my_context Platform](https://mycontext.fbien.com/favicon.ico) **Powered by _my_context Platform**](https://mycontext.fbien.com)
 
-## Objective
+> **Note:** This repository is **public** and intended for open-source use. Contributions and community feedback are welcome!
 
-Enable developers to instantly bootstrap a production-ready, context-driven Next.js project—complete with all context files, best-practice architecture, and UI foundations—using a single terminal command:
+# create-my-context-app
 
-```bash
+## 🚀 Instantly Scaffold a Production-Ready, Context-Driven Next.js App
+
+**create-my-context-app** is a modern CLI that bootstraps a Next.js project with best-practice architecture, rich context files, and a beautiful UI foundation (shadcn/ui, Tailwind CSS). It's designed for AI-powered, context-first workflows—so you can go from idea to production in minutes.
+
+---
+
+## 🏁 Quick Start
+
+```sh
+npx create-my-context-app --name my-app --type full --generate --description "A SaaS for AI-driven project management."
+```
+
+Or, run interactively:
+
+```sh
 npx create-my-context-app
 ```
 
 ---
 
-## Problem Statement
+## ✨ Features
 
-- **Friction in Setup**: Developers waste time manually setting up project structure, context files, and best-practice configs.
-- **Inconsistent Context**: Without automation, context files and architecture often drift from standards.
-- **Onboarding Bottleneck**: New contributors face a steep learning curve without a standardized starting point.
-
----
-
-## Solution Overview
-
-- **Composable CLI**: A Node.js CLI tool that scaffolds a new project directory, runs `pnpm dlx shadcn@latest init`, and injects all required context files and structure.
-- **Context-Driven**: Reads from a template `_my_context/` folder, ensuring every new project starts with the latest, most effective context files.
-- **Extensible**: Supports flags for project type (full/landing), optional features (PWA, analytics), and future template expansion.
+- **Context-Driven**: Generates or imports PRD, user stories, specs, and AI prompts into `_my_context/`.
+- **Modern UI**: Sets up shadcn/ui, Tailwind CSS, and a responsive, accessible design system.
+- **Flexible Context Setup**: Generate from description, import from email/project, or use a template.
+- **Robust CLI**: Interactive and non-interactive modes, with email verification and project selection.
+- **Best Practices**: SSR-first, RSC, modular TypeScript, Zod validation, and secure defaults.
+- **Seamless Online Review**: Instantly review and edit your context at [mycontext.fbien.com](https://mycontext.fbien.com).
 
 ---
 
-## Key Features
+## 🛠️ CLI Usage
 
-1. **Interactive CLI**: Prompts for project name, type, and options.
-2. **Automated UI Setup**: Runs `pnpm dlx shadcn@latest init` for UI foundation.
-3. **Context Injection**: Copies/generates all context files (`PRD.md`, `user-stories.md`, etc.) into the new project.
-4. **Best-Practice Structure**: Sets up `app/`, `components/`, `lib/`, and other directories per technical specs.
-5. **Dependency Installation**: Installs all required dependencies.
-6. **Next Steps Guidance**: Prints clear instructions for starting development.
+### Flags Table
 
----
+| Flag           | Description                                              | Default              |
+|----------------|----------------------------------------------------------|----------------------|
+| `--name`       | Project directory name                                   | `my-context-app`     |
+| `--type`       | Project type: `full` or `landing`                        | `full`               |
+| `--generate`   | Generate new context from a description (for anonymous flow) |                    |
+| `--description`| Project description for context generation               |                      |
+| `--source-id`  | Retrieve a previously generated anonymous context        |                      |
+| `--email`      | Email to use for authenticated actions (e.g., import)    |                      |
+| `--project`    | Project ID to fetch/import (requires `--email`)          |                      |
+| `--code`       | Email verification code (for non-interactive use)        |                      |
+| `--yes`        | Skip all interactive prompts                             | `false`              |
 
-## Implementation Plan
+### Example Workflows
 
-### 1. CLI Tool Design
+#### Generate New Context Anonymously
+```sh
+npx create-my-context-app --name my-idea --type full --generate --description "A platform for sharing creative prompts."
+```
+> **Note:** This will return a `sourceId`. Save it to retrieve your context later!
 
-- **Language**: TypeScript (compiled to Node.js)
-- **Dependencies**: `prompts`, `execa`, `fs-extra`, `chalk`
-- **Entry Point**: `bin/index.js` (with shebang for npx compatibility)
-- **NPM Publish**: `create-my-context-app` as the CLI name
+#### Retrieve Anonymous Context by Source ID
+```sh
+npx create-my-context-app --name my-retrieved-idea --source-id <your-source-id>
+```
 
-### 2. Template Structure
+#### Import Existing Context (Authenticated)
+```sh
+npx create-my-context-app --name landing-demo --type landing --email user@example.com --project <project-id>
+```
 
-- `templates/full/` and `templates/landing/` for different project types
-- Each template includes:
-  - `_my_context/` (all context files)
-  - `app/`, `components/`, `lib/`, etc. (empty or with starter files)
-  - Example `README.md`, `tailwind.config.ts`, etc.
-
-### 3. CLI Flow
-
-1. **Prompt for Project Name and Type**
-2. **Create Project Directory**
-3. **Run `pnpm dlx shadcn@latest init`** in the new directory
-4. **Copy Template Files** based on project type
-5. **Prompt: Do you want to fetch existing context generations by email?**
-6. **If yes:**
-   - Fetch all generations for the email
-   - **If multiple projects are found:**
-     - Prompt user to select which project to import (using the new `project` parameter)
-     - Fetch and inject only the selected project's context files
-7. **Install Dependencies** (`pnpm install`)
-8. **Print Next Steps**
-
----
-
-## Example CLI Pseudocode (with Project Selection)
-
-```ts
-import prompts from "prompts"
-import { execSync } from "child_process"
-import { copySync } from "fs-extra"
-import path from "path"
-import fetch from "node-fetch"
-
-async function main() {
-  // ...prompt for name, type, email...
-  const generations = await fetchGenerations(email)
-  const projects = getUniqueProjects(generations)
-  let selectedProject = null
-  if (projects.length > 1) {
-    selectedProject = await promptProjectSelection(projects)
-  }
-  const filteredGenerations = selectedProject
-    ? await fetchGenerations(email, selectedProject)
-    : generations
-  // ...inject filteredGenerations into _my_context/ ...
-}
+#### Interactive (Prompted) Flow
+```sh
+npx create-my-context-app
+# CLI: How would you like to set up your project context?
+# User: (choose Generate Anonymously, Retrieve with Source ID, or Import from Account)
+# ...
 ```
 
 ---
 
-## Acceptance Criteria
+## 🧩 Context Setup Modes
 
-- [ ] CLI runs with `npx create-my-context-app`
-- [ ] Prompts for project name and type
-- [ ] Runs shadcn/ui init and sets up Tailwind, config, etc.
-- [ ] Copies all context files and starter structure
-- [ ] Installs dependencies and prints next steps
-- [ ] README and docs are included in the scaffold
-- [ ] **Supports project selection when fetching context generations by email**
-- [ ] **Works offline for default templates; only requires internet for optional context fetch**
+1.  **Generate Anonymously**: Describe your project and let the CLI generate all context files. You will receive a unique `sourceId` to access these files later. This is great for quick trials.
+2.  **Retrieve by Source ID**: If you've already generated context anonymously, use the `sourceId` to download the files into a new project scaffold.
+3.  **Import from Account (Authenticated)**: Fetch context files previously generated on [mycontext.fbien.com](https://mycontext.fbien.com) using your email and Project ID. This links the context to your dashboard.
+4.  **Template Only**: Use the default template context files as a starting point.
 
 ---
 
-## Future Enhancements
+## 🔑 Email Verification
 
-- **Flags for non-interactive mode**: e.g., `npx create-my-context-app my-app --type=full --pwa`
-- **Custom context file prompts**: Allow user to input PRD, user stories, etc. at scaffold time
-- **Template updates**: Pull latest context templates from a remote repo
-- **Post-creation hooks**: Auto-open in VSCode, git init, etc.
+When providing your email, you'll receive a verification code. Paste it into the CLI (or use `--code` for automation).
+
+**Example:**
+```sh
+npx create-my-context-app --email user@example.com --generate --description "..."
+# CLI: A verification code has been sent to user@example.com
+# CLI: Please enter the code:
+# User: 123456
+# CLI: Verified! Continuing...
+```
 
 ---
 
-## References
+## 🌐 Reviewing Your Context
 
-- See `technical-specs.md` for architecture and stack
-- See `development-guidelines.md` for code standards
-- See `prompts/project-starter.md` for initial project setup logic
-
----
-
-## API Integration: Generations Fetch
-
-### Overview
-
-A new API route `/api/generations` enables users (or automated tools) to fetch all generated context files for their projects by validating with their email address. Now, you can also filter by project using the `project` query parameter.
-
-### Endpoint
-```
-GET /api/generations?email=user@example.com
-GET /api/generations?email=user@example.com&project=project123
-```
-
-### Query Parameters
-- `email` (required): The user's email address.
-- `project` (optional): Project ID to filter generations (e.g., `project123`).
-
-### Response
-```json
-{
-  "generations": [ ... ]
-}
-```
-
-### Integration Use Cases
-- Fetch all context files for a user, or only for a specific project.
-- Use in scaffolder CLI to let users select which project context to import.
-
-### Security
-- This endpoint authenticates by email only. For production, add authentication and rate limiting.
+- **Online:** Click the dashboard link printed in your terminal (e.g., [https://mycontext.fbien.com/projects/<project-id>](https://mycontext.fbien.com/projects/<project-id>)) to view and edit your context files in the web UI.
+- **Locally:** Open the `_my_context/` folder in your project to see all generated files in your code editor.
 
 ---
 
-## Next Steps
+## 🖥️ UI & Styling
 
-1. Scaffold the CLI repo (`create-my-context-app`)
-2. Add templates for both project types
-3. Implement CLI logic and test locally
-4. Publish to npm and document in main platform README
-5. **Update CLI to use the `project` parameter for precise context import**
-6. **Reference this API doc in your scaffolder and onboarding documentation**
+- **shadcn/ui**: Modern, accessible React components ([docs](https://ui.shadcn.com/docs/components))
+- **Tailwind CSS**: Utility-first, responsive styling
+- **SSR & RSC**: Server-first rendering for performance and SEO
+- **Best Practices**: Modular TypeScript, Zod validation, error boundaries, and guard clauses
 
 ---
 
-**This plan ensures every new project starts with the same context-driven, production-ready foundation that powers _my_context itself.**
+## ⚡ Under the Hood: How It Works
+
+1. **Create Project Directory**
+2. **Copy Template Files** (`full`/`landing`)
+3. **Inject Context** (generate/import/template)
+4. **Install Dependencies** (`pnpm install`)
+5. **Initialize shadcn/ui** (`pnpm dlx shadcn@latest init`)
+6. **Print Next Steps & Dashboard Link**
 
 ---
 
-## API Integration: Generations Fetch
+## 🛡️ Security & Best Practices
 
-### Overview
+- **Input Validation**: All user input is validated (Zod, email format, etc.)
+- **HTTPS**: All API calls use HTTPS
+- **Rate Limiting**: API endpoints are rate-limited
+- **Error Handling**: Guard clauses and clear error messages throughout
+- **No Secrets in Context**: Never store passwords or secrets in context files
 
-A new API route `/api/generations` enables users (or automated tools) to fetch all generated context files for their projects by validating with their email address. This is useful for:
-- Automated onboarding (e.g., pulling context into a new scaffolded project)
-- Developer self-service (downloading all their context files)
-- Integrating with external tools or platforms
+---
 
-### Usage
+## 🧪 Testing
 
-**Endpoint:**
-```
-GET /api/generations?email=user@example.com
-```
+- **Unit Tests**: Components and CLI logic are tested with Jest and React Testing Library
+- **How to Run Tests:**
+  ```sh
+  pnpm test
+  ```
+- **Troubleshooting:**
+  - Missing template files? Ensure you're using the latest CLI version.
+  - Email verification not working? Check your spam folder or try a different email.
+  - Still stuck? [Open an issue](https://github.com/fbien/create-my-context-app/issues)
 
-**Example Request:**
-```bash
-curl "https://mycontext.fbien.com/api/generations?email=user@example.com"
-```
+---
 
-**Example Response:**
-```json
-{
-  "generations": [
-    {
-      "id": "project123_PRD.md_2024-01-15T10:30:00.000Z",
-      "content": "# Product Requirements Document\n\n## Executive Summary\n...",
-      "documentType": "PRD.md",
-      "files": "{\"PRD.md\":\"# Product Requirements Document\\n\\n## Executive Summary\\n...\"}",
-      "createdAt": "2024-01-15T10:30:00.000Z"
-    },
-    // ... more generations ...
-  ]
-}
-```
+## 🤝 Contributing
 
-**Error Responses:**
-- Missing email: `{ "error": "Missing email parameter." }` (400)
-- User not found: `{ "error": "User not found." }` (404)
-- No generations: `{ "generations": [] }` (200)
+1. Fork the repo
+2. Create a feature branch
+3. Make your changes (with tests!)
+4. Open a PR
 
-### Integration Example (Node.js)
-```js
-const fetch = require('node-fetch');
-async function getGenerations(email) {
-  const response = await fetch(`https://mycontext.fbien.com/api/generations?email=${encodeURIComponent(email)}`);
-  if (!response.ok) throw new Error(await response.text());
-  return response.json();
-}
-```
+---
 
-### Security Notes
-- This endpoint authenticates by email only. For production, add authentication (token/session) and rate limiting.
-- Always use HTTPS in production.
-- Validate email format before making requests.
+## 📚 Links & References
 
-### Scaffold CLI Usage
-- The CLI can optionally fetch and inject the user's generations into a new project by calling this endpoint after scaffold.
-- Future: Support for authenticated fetch and richer integration (e.g., select which generations to import). 
+- [shadcn/ui Components](https://ui.shadcn.com/docs/components)
+- [Tailwind CSS](https://tailwindcss.com/docs/installation)
+- [Project Dashboard](https://mycontext.fbien.com/projects)
+- [CLI Issues & Support](https://github.com/fbien/create-my-context-app/issues)
+
+---
+
+## 💡 Why Context-Driven Development?
+
+This workflow lets you:
+- **Plan, code, and iterate faster** with AI-generated context
+- **Share and review** your project's context online (authenticated) or via `sourceId` (anonymous)
+- **Start every project with a production-ready, best-practice foundation**
+
+---
+
+**Scaffold smarter. Build faster. Ship with context.**
+
+
+
+
+
+
+
+

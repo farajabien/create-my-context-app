@@ -1,8 +1,61 @@
-node_modules
-.env
+# Dependencies
+/node_modules
+/.pnpm-store
+
+# Build artifacts
+/dist
+/bin
+/.next/
+/out/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS generated files
 .DS_Store
-.vscode
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE settings
 .idea
-.cursorrules
-.cursorignore
-.cursorignore
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test coverage
+/coverage
+
+# Next.js
+next-env.d.ts
+.next/
+.swc/
+
+# Templates node_modules
+/templates/**/node_modules
+/templates/**/.next
+/templates/**/out
+/templates/**/pnpm-lock.yaml
+
+# Vitest
+/coverage
+.vitest-cache*
