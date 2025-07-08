@@ -56,6 +56,7 @@ async function main() {
   let contextDescription = "";
   let code = cliArgs.code as string | undefined;
   let verified = false;
+  let contextMode: 'generate_anon' | 'retrieve_source' | 'import_auth' | 'template' = 'template';
 
   if (isNonInteractive) {
     // Non-interactive flows
@@ -64,16 +65,20 @@ async function main() {
     sourceId = typeof cliArgs['source-id'] === 'string' ? cliArgs['source-id'] : undefined;
     
     if (sourceId) {
+      contextMode = 'retrieve_source';
       // Flow: Retrieve by sourceId (highest priority)
       // This will be handled later in the logic
     } else if (cliArgs.email) {
-      // Flow: Authenticated
+      contextMode = 'import_auth';
       fetchGenerations = true;
       projectId = typeof cliArgs.project === 'string' ? cliArgs.project : undefined;
     } else if (cliArgs.generate && cliArgs.description) {
-      // Flow: Anonymous Generation
+      contextMode = 'generate_anon';
       generateNewContext = true;
       contextDescription = typeof cliArgs.description === 'string' ? cliArgs.description : '';
+    } else {
+      // No context flags provided: default to template mode
+      contextMode = 'template';
     }
 
   } else {
@@ -157,14 +162,19 @@ async function main() {
     projectType = cliArgs.type ? String(cliArgs.type) : response.type;
 
     if (response.contextSource === "generate_anon") {
+      contextMode = 'generate_anon';
       generateNewContext = true;
       contextDescription = response.contextDescription;
     } else if (response.contextSource === "retrieve_source") {
+        contextMode = 'retrieve_source';
         sourceId = response.sourceId;
     } else if (response.contextSource === "import_auth") {
+      contextMode = 'import_auth';
       fetchGenerations = true;
       email = response.email;
       projectId = response.projectId || undefined;
+    } else {
+      contextMode = 'template';
     }
   }
 
@@ -212,18 +222,20 @@ async function main() {
     let injectedProjectId = projectId;
     let injectedSourceId = sourceId;
 
-    if (sourceId) {
+    if (contextMode === 'retrieve_source' && sourceId) {
         console.log(chalk.gray(`- Fetching context for Source ID: ${sourceId}...`));
+        if (!sourceId) throw new Error('Source ID is required for retrieve_source mode.');
         const files = await getContextBySourceId(sourceId);
         for (const [fileName, content] of Object.entries(files)) {
             fs.writeFileSync(path.join(contextPath, fileName), typeof content === 'string' ? content : String(content), 'utf8');
         }
         didInjectContext = true;
         injectedSourceId = sourceId; // for logging
-    } else if (generateNewContext && contextDescription) {
+    } else if (contextMode === 'generate_anon' && generateNewContext && contextDescription) {
       // Anonymous generation doesn't require verification for now
       // Generate context
       console.log(chalk.gray('- Generating new context files anonymously...'));
+      if (!contextDescription) throw new Error('Context description is required for anonymous generation.');
       const generationResult = await generateAnonymousContext(contextDescription, projectType);
       const files = generationResult.files;
       injectedSourceId = generationResult.sourceId; // Capture the new sourceId
@@ -233,7 +245,7 @@ async function main() {
       }
       didInjectContext = true;
 
-    } else if (fetchGenerations && email) {
+    } else if (contextMode === 'import_auth' && fetchGenerations && email) {
       // Email verification (if not already verified)
       if (!verified) {
         if (!code) {
@@ -287,6 +299,13 @@ async function main() {
           fs.writeFileSync(path.join(contextPath, gen.documentType), gen.content, 'utf8');
         }
       }
+      didInjectContext = true;
+    } else if (contextMode === 'template') {
+      // Copy template context files (already done by template copy above, but ensure _my_context exists)
+      if (!fs.existsSync(contextPath)) {
+        fs.mkdirSync(contextPath, { recursive: true });
+      }
+      // No-op: template context files are already present
       didInjectContext = true;
     }
     // Print dashboard link if context was injected and projectId is available

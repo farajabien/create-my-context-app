@@ -13,14 +13,12 @@
 ## 🏁 Quick Start
 
 ```sh
-npx create-my-context-app --name my-app --type full --generate --description "A SaaS for AI-driven project management."
+npx create-my-context-app --name my-app
 ```
 
-Or, run interactively:
+This will scaffold a new Next.js project with a default context template (PRD, user stories, specs, etc.) in the `_my_context/` folder.
 
-```sh
-npx create-my-context-app
-```
+You can also use advanced flags to generate or import context from the platform (see below).
 
 ---
 
