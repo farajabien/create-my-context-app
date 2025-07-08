@@ -1,4 +1,4 @@
-[![Powered by _my_context Platform](https://mycontext.fbien.com/favicon.ico) **Powered by _my_context Platform**](https://mycontext.fbien.com)
+[**Powered by _my_context Platform**](https://mycontext.fbien.com)
 
 > **Note:** This repository is **public** and intended for open-source use. Contributions and community feedback are welcome!
 
