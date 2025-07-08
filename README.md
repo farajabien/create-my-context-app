@@ -216,6 +216,16 @@ This workflow lets you:
 
 **Scaffold smarter. Build faster. Ship with context.**
 
+---
+
+## 📝 Changelog
+
+### v1.1.0
+- **Feature:** Add `--import-process` CLI command to import process code and integration instructions directly from the MyContext platform.
+- **Testing:** Comprehensive unit tests for the import logic and CLI argument parsing.
+- **Docs:** Updated CLI usage section with detailed instructions and examples for the new import feature.
+- **Improvements:** Minor code and documentation refinements for maintainability and clarity.
+
 
 
 
