@@ -77,6 +77,39 @@ npx create-my-context-app
 # ...
 ```
 
+### Import a Process from the Platform Library
+
+> **New!** Import a context process (e.g., payment handler, webhook, etc.) directly into your project from the MyContext platform.
+
+#### Usage
+```sh
+npx create-my-context-app --import-process <process-id> --output <file-path>
+```
+
+#### Arguments
+| Flag                  | Description                                      |
+|-----------------------|--------------------------------------------------|
+| `--import-process`    | The ID of the process to import                  |
+| `--output`            | The file path to write the imported code to      |
+
+#### What It Does
+- Fetches the process export from your API:  
+  `GET /api/processes/<process-id>/export`
+- Parses the returned markdown to extract code blocks and integration instructions.
+- Writes the main code block(s) to the specified output file.
+- Optionally, writes integration instructions as a comment or a separate `.md` file.
+- Prints a summary and next steps in the terminal.
+
+#### Example
+```sh
+npx create-my-context-app --import-process mpesa-callback --output ./lib/payments/mpesa.ts
+```
+
+#### Next Steps
+- Review the generated code and instructions.
+- Install any required dependencies.
+- Follow integration/setup steps as described in the instructions file (if present).
+
 ---
 
 ## 🧩 Context Setup Modes

@@ -20,6 +20,8 @@ const path_1 = __importDefault(require("path"));
 const chalk_1 = __importDefault(require("chalk")); // For colorful output
 const fs_1 = __importDefault(require("fs"));
 const node_fetch_1 = __importDefault(require("node-fetch"));
+const fsPromises = require("fs/promises");
+const fetch = require("node-fetch");
 /**
  * Simple CLI flag parsing (no minimist dependency)
  */
@@ -38,11 +40,67 @@ function parseArgs() {
     return result;
 }
 /**
+ * Imports a process export from the API, extracts code and instructions, and writes to output files.
+ * @param {string} processId - The process ID to import
+ * @param {string} outputPath - The file path to write the code to
+ */
+async function importProcess(processId, outputPath) {
+  const apiUrl = `http://localhost:3000/api/processes/${processId}/export`;
+  let res;
+  try {
+    res = await fetch(apiUrl);
+  } catch (err) {
+    console.error(chalk_1.default.red(`Network error: ${err.message}`));
+    process.exit(1);
+  }
+  if (!res.ok) {
+    console.error(chalk_1.default.red(`Failed to fetch process: ${res.status} ${res.statusText}`));
+    process.exit(1);
+  }
+  const markdown = await res.text();
+
+  // Extract the first TypeScript code block
+  const codeMatch = markdown.match(/```(?:typescript|ts)\n([\s\S]*?)```/);
+  const code = codeMatch ? codeMatch[1] : null;
+  if (!code) {
+    console.error(chalk_1.default.red('No TypeScript code block found in process export.'));
+    process.exit(1);
+  }
+  await fsPromises.writeFile(outputPath, code, 'utf8');
+
+  // Optionally, extract integration instructions
+  const instructionsMatch = markdown.match(/## Integration Instructions\n([\s\S]*)/);
+  if (instructionsMatch) {
+    const instructions = instructionsMatch[1].trim();
+    await fsPromises.writeFile(outputPath + '.md', instructions, 'utf8');
+  }
+
+  console.log(chalk_1.default.green(`✔ Process code written to: ${outputPath}`));
+  if (instructionsMatch) {
+    console.log(chalk_1.default.green(`✔ Integration instructions written to: ${outputPath}.md`));
+  }
+  console.log(chalk_1.default.white('Next steps:'));
+  console.log(chalk_1.default.cyan('- Review the code and instructions.'));
+  console.log(chalk_1.default.cyan('- Install any required dependencies.'));
+  if (instructionsMatch) {
+    console.log(chalk_1.default.cyan('- Follow integration/setup steps as described.'));
+  }
+}
+/**
  * Main CLI function that handles the scaffolding process
  */
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const cliArgs = parseArgs();
+        // --- Import Process Command ---
+        if (cliArgs["import-process"] && cliArgs["output"]) {
+            // Wrap in IIFE to allow await in non-async context
+            (async () => {
+                await importProcess(cliArgs["import-process"], cliArgs["output"]);
+                process.exit(0);
+            })();
+            return;
+        }
         const isNonInteractive = !!cliArgs.email && !!cliArgs.project;
         let projectName = "";
         let projectType = "";
@@ -326,4 +384,6 @@ function verifyCode(email, code) {
         }
     });
 }
-main();
+(async () => {
+  await main();
+})();
