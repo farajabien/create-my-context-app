@@ -639,7 +639,7 @@ async function sendVerificationCode(email: string): Promise<boolean> {
       body: JSON.stringify({ email }),
     });
     
-    const data = await response.json();
+    const data = await response.json() as { error?: string };
     if (!response.ok) {
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
     }
@@ -673,7 +673,7 @@ async function verifyCode(email: string, code: string): Promise<boolean> {
       return false;
     }
     
-    return data.verified === true;
+    return (data as { verified?: boolean }).verified === true;
   } catch (error) {
     console.error(chalk.red(`Failed to verify code: ${error}`));
     return false;
