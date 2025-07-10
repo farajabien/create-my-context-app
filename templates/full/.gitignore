@@ -1,0 +1,69 @@
+# Node dependencies
+node_modules/
+.pnpm/
+.pnp.*
+.yarn/
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# pnpm
+.pnpm-debug.log*
+# Uncomment the next line if you do NOT want to commit the lockfile (not recommended)
+# pnpm-lock.yaml
+
+# Testing
+coverage/
+
+# Next.js
+.next/
+.next/cache/
+out/
+
+# Build output (if any custom)
+# build/
+
+# Vercel
+.vercel/
+
+# Env files
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Misc
+.DS_Store
+Thumbs.db
+*.pem
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Editor directories and files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# TurboRepo
+.turbo/
+
+# Cache
+.npm/
+.cache/
+
+# Documentation
+docs/
