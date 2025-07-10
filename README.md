@@ -28,7 +28,7 @@ You can also use advanced flags to generate or import context from the platform 
 - **Modern UI**: Sets up shadcn/ui, Tailwind CSS, and a responsive, accessible design system.
 - **Flexible Context Setup**: Generate from description, import from email/project, or use a template.
 - **Robust CLI**: Interactive and non-interactive modes, with email verification and project selection.
-- **Best Practices**: SSR-first, RSC, modular TypeScript, Zod validation, and secure defaults.
+- **Best Practices**: SSR-first, RSC, modular TypeScript, and secure defaults.
 - **Seamless Online Review**: Instantly review and edit your context at [mycontext.fbien.com](https://mycontext.fbien.com).
 
 ---
@@ -146,7 +146,7 @@ npx create-my-context-app --email user@example.com --generate --description "...
 - **shadcn/ui**: Modern, accessible React components ([docs](https://ui.shadcn.com/docs/components))
 - **Tailwind CSS**: Utility-first, responsive styling
 - **SSR & RSC**: Server-first rendering for performance and SEO
-- **Best Practices**: Modular TypeScript, Zod validation, error boundaries, and guard clauses
+- **Best Practices**: Modular TypeScript, error boundaries, and guard clauses
 
 ---
 
@@ -163,7 +163,7 @@ npx create-my-context-app --email user@example.com --generate --description "...
 
 ## 🛡️ Security & Best Practices
 
-- **Input Validation**: All user input is validated (Zod, email format, etc.)
+- **Input Validation**: All user input is validated (e.g., email format).
 - **HTTPS**: All API calls use HTTPS
 - **Rate Limiting**: API endpoints are rate-limited
 - **Error Handling**: Guard clauses and clear error messages throughout
@@ -173,7 +173,7 @@ npx create-my-context-app --email user@example.com --generate --description "...
 
 ## 🧪 Testing
 
-- **Unit Tests**: Components and CLI logic are tested with Jest and React Testing Library
+- **Unit Tests**: CLI logic is tested with Jest.
 - **How to Run Tests:**
   ```sh
   pnpm test

@@ -40,153 +40,195 @@ function parseArgs() {
 export { parseArgs };
 
 /**
- * Main CLI function that handles the scaffolding process
+ * Configuration for the scaffolding process
  */
-async function main() {
-  const cliArgs = parseArgs();
-  const isNonInteractive = !!cliArgs.yes || (!!cliArgs.email && !!cliArgs.project) || !!cliArgs['source-id'] || (!!cliArgs.generate && !!cliArgs.description && !cliArgs.email);
+interface ScaffoldingConfig {
+  projectName: string;
+  projectType: string;
+  contextMode: 'generate_anon' | 'retrieve_source' | 'import_auth' | 'template';
+  fetchGenerations: boolean;
+  email?: string;
+  projectId?: string;
+  sourceId?: string;
+  generateNewContext: boolean;
+  contextDescription: string;
+  code?: string;
+  verified: boolean;
+  cliArgs: Record<string, string | boolean>;
+}
 
-  let projectName = "";
-  let projectType = "";
-  let fetchGenerations = false;
-  let email = cliArgs.email as string | undefined;
-  let projectId = cliArgs.project as string | undefined;
-  let sourceId = cliArgs['source-id'] as string | undefined;
-  let generateNewContext = false;
-  let contextDescription = "";
-  let code = cliArgs.code as string | undefined;
-  let verified = false;
-  let contextMode: 'generate_anon' | 'retrieve_source' | 'import_auth' | 'template' = 'template';
-
-  if (isNonInteractive) {
-    // Non-interactive flows
-    projectName = typeof cliArgs.name === "string" ? cliArgs.name : "my-context-app";
-    projectType = typeof cliArgs.type === "string" ? cliArgs.type : "full";
-    sourceId = typeof cliArgs['source-id'] === 'string' ? cliArgs['source-id'] : undefined;
-    
-    if (sourceId) {
-      contextMode = 'retrieve_source';
-    } else if (cliArgs.email) {
-      contextMode = 'import_auth';
-      fetchGenerations = true;
-      projectId = typeof cliArgs.project === 'string' ? cliArgs.project : undefined;
-    } else if (cliArgs.generate && cliArgs.description) {
-      contextMode = 'generate_anon';
-      generateNewContext = true;
-      contextDescription = typeof cliArgs.description === 'string' ? cliArgs.description : '';
-    } else {
-      contextMode = 'template';
-    }
-
-  } else {
-    // Interactive mode
-    console.log(chalk.blue("✨ Welcome to the MyContext App Scaffolder! ✨"));
-    
-    const questions: PromptObject<any>[] = [];
-    if (!cliArgs.name) {
-      questions.push({
-        type: "text",
-        name: "name",
-        message: "What is your project name?",
-        validate: (value: string) => {
-          if (value.length === 0) {
-            return "Please enter a project name.";
-          }
-          if (value === "." || value === ".." || value.includes("/") || value.includes("\\")) {
-            return "Please enter a valid project name (cannot be '.' or '..' and cannot contain path separators).";
-          }
-          if (/[<>:"|?*]/.test(value)) {
-            return "Please enter a valid project name (cannot contain < > : \" | ? * characters).";
-          }
-          return true;
-        },
-      });
-    }
-    
-    if (!cliArgs.type) {
-      questions.push({
-        type: "select",
-        name: "type",
-        message: "What type of project do you want to create?",
-        choices: [
-          { title: "Full App (with full Next.js structure)", value: "full" },
-          { title: "Landing Page (optimized for simple landing pages)", value: "landing" },
-        ],
-        initial: 0,
-      });
-    }
-    
+/**
+ * Gathers user input in interactive mode.
+ * @param cliArgs - Parsed command-line arguments.
+ * @returns A promise that resolves to the scaffolding configuration.
+ */
+async function getInteractiveUserInput(cliArgs: Record<string, string | boolean>): Promise<ScaffoldingConfig> {
+  console.log(chalk.blue("✨ Welcome to the MyContext App Scaffolder! ✨"));
+  
+  const questions: PromptObject<any>[] = [];
+  if (!cliArgs.name) {
+    questions.push({
+      type: "text",
+      name: "name",
+      message: "What is your project name?",
+      validate: (value: string) => {
+        if (value.length === 0) return "Please enter a project name.";
+        if (value === "." || value === ".." || value.includes("/") || value.includes("\\")) {
+          return "Please enter a valid project name (cannot be '.' or '..' and cannot contain path separators).";
+        }
+        if (/[<>:"|?*]/.test(value)) {
+          return "Please enter a valid project name (cannot contain < > : \" | ? * characters).";
+        }
+        return true;
+      },
+    });
+  }
+  
+  if (!cliArgs.type) {
     questions.push({
       type: "select",
-      name: "contextSource",
-      message: "How would you like to set up your project context?",
+      name: "type",
+      message: "What type of project do you want to create?",
       choices: [
-        { title: "Generate new context (Anonymous)", value: "generate_anon" },
-        { title: "Retrieve context with a Source ID", value: "retrieve_source" },
-        { title: "Import existing context from your account", value: "import_auth" },
-        { title: "Start with basic template only", value: "template" },
+        { title: "Full App (with full Next.js structure)", value: "full" },
+        { title: "Landing Page (optimized for simple landing pages)", value: "landing" },
       ],
       initial: 0,
     });
-    
-    questions.push({
-      type: (prev: string) => (prev === "generate_anon" ? "text" : null),
-      name: "contextDescription",
-      message: "Describe your project idea (the more detail, the better):",
-      validate: (value: string) =>
-        value.length > 10
-          ? true
-          : "Please provide a more detailed description (at least 10 characters).",
-    });
-    
-    questions.push({
-      type: (prev: string) => (prev === "retrieve_source" ? "text" : null),
-      name: "sourceId",
-      message: "Please enter your Source ID to retrieve context:",
-    });
-    
-    questions.push({
-      type: (prev: string, values: any) =>
-        values.contextSource === "import_auth" ? "text" : null,
-      name: "email",
-      message: "Please enter your email to fetch existing context:",
-      validate: (value: string) =>
-        /^\S+@\S+\.\S+$/.test(value)
-          ? true
-          : "Please enter a valid email address.",
-    });
-    
-    questions.push({
-      type: (prev: string, values: any) =>
-        values.contextSource === "import_auth" && !cliArgs.project ? "text" : null,
-      name: "projectId",
-      message: "Paste your Project ID (or leave blank to select interactively):",
-      validate: (value: string) =>
-        value.length === 0 || /^[a-zA-Z0-9_-]+$/.test(value)
-          ? true
-          : "Invalid Project ID format.",
-    });
-    
-    const response = await prompts(questions);
-    projectName = cliArgs.name ? String(cliArgs.name) : response.name;
-    projectType = cliArgs.type ? String(cliArgs.type) : response.type;
-
-    if (response.contextSource === "generate_anon") {
-      contextMode = 'generate_anon';
-      generateNewContext = true;
-      contextDescription = response.contextDescription;
-    } else if (response.contextSource === "retrieve_source") {
-      contextMode = 'retrieve_source';
-      sourceId = response.sourceId;
-    } else if (response.contextSource === "import_auth") {
-      contextMode = 'import_auth';
-      fetchGenerations = true;
-      email = response.email;
-      projectId = response.projectId || undefined;
-    } else {
-      contextMode = 'template';
-    }
   }
+  
+  questions.push({
+    type: "select",
+    name: "contextSource",
+    message: "How would you like to set up your project context?",
+    choices: [
+      { title: "Generate new context (Anonymous)", value: "generate_anon" },
+      { title: "Retrieve context with a Source ID", value: "retrieve_source" },
+      { title: "Import existing context from your account", value: "import_auth" },
+      { title: "Start with basic template only", value: "template" },
+    ],
+    initial: 0,
+  });
+  
+  questions.push({
+    type: (prev: string) => (prev === "generate_anon" && !cliArgs.description ? "text" : null),
+    name: "contextDescription",
+    message: "Describe your project idea (the more detail, the better):",
+    multiline: true,
+    validate: (value: string) =>
+      value.length > 10
+        ? true
+        : "Please provide a more detailed description (at least 10 characters).",
+  } as any);
+  
+  questions.push({
+    type: (prev: string) => (prev === "retrieve_source" ? "text" : null),
+    name: "sourceId",
+    message: "Please enter your Source ID to retrieve context:",
+  });
+  
+  questions.push({
+    type: (prev: string, values: any) =>
+      values.contextSource === "import_auth" ? "text" : null,
+    name: "email",
+    message: "Please enter your email to fetch existing context:",
+    validate: (value: string) =>
+      /^\S+@\S+\.\S+$/.test(value)
+        ? true
+        : "Please enter a valid email address.",
+  });
+  
+  questions.push({
+    type: (prev: string, values: any) =>
+      values.contextSource === "import_auth" && !cliArgs.project ? "text" : null,
+    name: "projectId",
+    message: "Paste your Project ID (or leave blank to select interactively):",
+    validate: (value: string) =>
+      value.length === 0 || /^[a-zA-Z0-9_-]+$/.test(value)
+        ? true
+        : "Invalid Project ID format.",
+  });
+  
+  const response = await prompts(questions);
+
+  const config: ScaffoldingConfig = {
+    projectName: cliArgs.name ? String(cliArgs.name) : response.name,
+    projectType: cliArgs.type ? String(cliArgs.type) : response.type,
+    contextMode: response.contextSource || 'template',
+    fetchGenerations: false,
+    generateNewContext: false,
+    contextDescription: '',
+    verified: false,
+    cliArgs,
+  };
+
+  if (response.contextSource === "generate_anon") {
+    config.generateNewContext = true;
+    config.contextDescription = response.contextDescription || (cliArgs.description as string) || '';
+  } else if (response.contextSource === "retrieve_source") {
+    config.sourceId = response.sourceId;
+  } else if (response.contextSource === "import_auth") {
+    config.fetchGenerations = true;
+    config.email = response.email;
+    config.projectId = response.projectId || undefined;
+  }
+  
+  return config;
+}
+
+/**
+ * Determines the scaffolding configuration from non-interactive CLI arguments.
+ * @param cliArgs - Parsed command-line arguments.
+ * @returns The scaffolding configuration.
+ */
+function getNonInteractiveConfig(cliArgs: Record<string, string | boolean>): ScaffoldingConfig {
+  const config: ScaffoldingConfig = {
+    projectName: typeof cliArgs.name === "string" ? cliArgs.name : "my-context-app",
+    projectType: typeof cliArgs.type === "string" ? cliArgs.type : "full",
+    sourceId: typeof cliArgs['source-id'] === 'string' ? cliArgs['source-id'] : undefined,
+    email: cliArgs.email as string | undefined,
+    projectId: typeof cliArgs.project === 'string' ? cliArgs.project : undefined,
+    contextDescription: typeof cliArgs.description === 'string' ? cliArgs.description : '',
+    contextMode: 'template',
+    fetchGenerations: false,
+    generateNewContext: false,
+    verified: false,
+    code: cliArgs.code as string | undefined,
+    cliArgs,
+  };
+
+  if (config.sourceId) {
+    config.contextMode = 'retrieve_source';
+  } else if (config.email) {
+    config.contextMode = 'import_auth';
+    config.fetchGenerations = true;
+  } else if (cliArgs.generate && config.contextDescription) {
+    config.contextMode = 'generate_anon';
+    config.generateNewContext = true;
+  }
+
+  return config;
+}
+
+/**
+ * Executes the project scaffolding process based on the provided configuration.
+ * @param config - The scaffolding configuration.
+ */
+async function scaffoldProject(config: ScaffoldingConfig) {
+  let {
+    projectName,
+    projectType,
+    contextMode,
+    fetchGenerations,
+    email,
+    projectId,
+    sourceId,
+    generateNewContext,
+    contextDescription,
+    code,
+    verified,
+    cliArgs,
+  } = config;
 
   if (!projectName || !projectType) {
     console.log(chalk.red("Exiting: Project name and type are required."));
@@ -283,9 +325,11 @@ async function main() {
       throw new Error('package.json was not found after copying template files.');
     }
 
-    // Ensure _my_context directory exists
+    // Ensure _my_context directory exists and is empty, unless using template
     fs.mkdirSync(contextPath, { recursive: true });
-    emptyDirSync(contextPath);
+    if (contextMode !== 'template') {
+      emptyDirSync(contextPath);
+    }
 
     // Inject context based on mode
     let didInjectContext = false;
@@ -302,8 +346,7 @@ async function main() {
       injectedSourceId = sourceId;
       
     } else if (contextMode === 'generate_anon' && generateNewContext && contextDescription) {
-      console.log(chalk.gray('- Generating new context files anonymously...'));
-      const generationResult = await generateAnonymousContext(contextDescription, projectType);
+      const generationResult = await generateAnonymousContext(contextDescription, projectType, projectName);
       const files = generationResult.files;
       injectedSourceId = generationResult.sourceId;
 
@@ -437,6 +480,116 @@ async function main() {
 }
 
 /**
+ * Imports a process from the MyContext platform.
+ * @param processId - The ID of the process to import.
+ * @param outputPath - The file path to write the imported code to.
+ */
+async function importProcess(processId: string, outputPath: string) {
+  const stopSpinner = startSpinner(`Importing process '${processId}'...`);
+  try {
+    const url = `https://mycontext.fbien.com/api/processes/${processId}/export`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`Process with ID '${processId}' not found.`);
+      }
+      throw new Error(`API returned status ${response.status}`);
+    }
+
+    const markdownContent = await response.text();
+    stopSpinner();
+
+    // Extract code blocks
+    const codeBlocks = [];
+    const codeBlockRegex = /```(?:\w+)?\s*([\s\S]+?)```/g;
+    let match;
+    while ((match = codeBlockRegex.exec(markdownContent)) !== null) {
+      codeBlocks.push(match[1].trim());
+    }
+
+    if (codeBlocks.length === 0) {
+      console.log(chalk.yellow("No code blocks found in the process export. Writing full content to markdown file."));
+      const mdOutputPath = path.extname(outputPath) === '.md' ? outputPath : outputPath + '.md';
+      fs.mkdirSync(path.dirname(mdOutputPath), { recursive: true });
+      fs.writeFileSync(mdOutputPath, markdownContent, 'utf8');
+      console.log(chalk.green(`✅ Successfully wrote process documentation to ${mdOutputPath}`));
+      return;
+    }
+
+    const fullCode = codeBlocks.join('\n\n');
+    
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    fs.writeFileSync(outputPath, fullCode, 'utf8');
+
+    const mdOutputPath = outputPath.replace(path.extname(outputPath), '.md');
+    fs.writeFileSync(mdOutputPath, markdownContent, 'utf8');
+
+    console.log(chalk.green(`\n✅ Successfully imported process '${processId}'!`));
+    console.log(chalk.white(`- Code written to: ${chalk.cyan(outputPath)}`));
+    console.log(chalk.white(`- Full instructions written to: ${chalk.cyan(mdOutputPath)}`));
+    console.log(chalk.white("\nNext steps:"));
+    console.log(chalk.gray(`  - Review the code in ${path.basename(outputPath)}.`));
+    console.log(chalk.gray(`  - Follow any setup instructions in ${path.basename(mdOutputPath)}.`));
+
+  } catch (error: any) {
+    stopSpinner();
+    console.error(chalk.red(`\nAn error occurred during process import: ${error.message}`));
+    process.exit(1);
+  }
+}
+
+/**
+ * A simple text-based spinner for long-running operations.
+ * @param message - The message to display next to the spinner.
+ * @returns A function to stop the spinner.
+ */
+function startSpinner(message: string): () => void {
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  let i = 0;
+  process.stdout.write('\n'); // Start on a new line
+  const interval = setInterval(() => {
+    process.stdout.write(`\r${chalk.cyan(frames[i = ++i % frames.length])} ${message}`);
+  }, 80);
+
+  return () => {
+    clearInterval(interval);
+    // Clear the line and print a success checkmark
+    process.stdout.write('\r' + ' '.repeat(message.length + 5) + '\r'); 
+  };
+}
+
+/**
+ * Main CLI function that handles the scaffolding process
+ */
+async function main() {
+  const cliArgs = parseArgs();
+  
+  const processId = cliArgs['import-process'] as string | undefined;
+  const outputPath = cliArgs['output'] as string | undefined;
+
+  if (processId) {
+    if (!outputPath) {
+      console.error(chalk.red("Error: The --output flag is required when using --import-process."));
+      process.exit(1);
+    }
+    await importProcess(processId, outputPath);
+    return;
+  }
+  
+  const isNonInteractive = !!cliArgs.yes || (!!cliArgs.email && !!cliArgs.project) || !!cliArgs['source-id'] || (!!cliArgs.generate && !!cliArgs.description && !cliArgs.email);
+
+  let config: ScaffoldingConfig;
+  if (isNonInteractive) {
+    config = getNonInteractiveConfig(cliArgs);
+  } else {
+    config = await getInteractiveUserInput(cliArgs);
+  }
+
+  await scaffoldProject(config);
+}
+
+/**
  * Extracts unique project IDs from a list of generations by parsing the id field.
  * Assumes id format: <projectId>_<documentType>_<timestamp>
  */
@@ -531,11 +684,14 @@ async function getGenerations(email: string, project?: string): Promise<Generati
 async function generateAnonymousContext(
   description: string,
   projectType: string,
+  projectName: string,
 ): Promise<{ files: Record<string, string>, sourceId: string }> {
+  const stopSpinner = startSpinner("Generating new context files anonymously...");
   const url = "https://mycontext.fbien.com/api/generations/cli";
   const headers = { "Content-Type": "application/json" };
 
   const body = {
+    name: projectName,
     description,
     projectType,
   };
@@ -553,21 +709,26 @@ async function generateAnonymousContext(
     try {
       data = JSON.parse(raw);
     } catch (jsonErr) {
+      stopSpinner();
       console.error(chalk.red(`\n[API ERROR] Could not parse JSON from /api/generations/cli. Raw response:`));
       console.error(raw);
       throw new Error('API did not return valid JSON.');
     }
 
     if (!response.ok) {
+      stopSpinner();
       throw new Error(data.error || `HTTP error! status: ${response.status}`);
     }
 
     if (!data.sourceId || !data.files) {
+      stopSpinner();
       throw new Error('API response did not include sourceId and files for anonymous generation.');
     }
 
+    stopSpinner();
     return { files: data.files, sourceId: data.sourceId };
   } catch (error) {
+    stopSpinner();
     console.error(chalk.red(`Failed to generate anonymous context: ${error}`));
     throw error;
   }

@@ -112,6 +112,15 @@ describe("CLI Argument Parser", () => {
         yes: true
       });
     });
+
+    it("should handle import-process flag with output", () => {
+      testUtils.setProcessArgs(["--import-process", "process-123", "--output", "./output.ts"]);
+      const parsed = parseArgs();
+      expect(parsed).toEqual({
+        "import-process": "process-123",
+        output: "./output.ts"
+      });
+    });
   });
 
   describe("Edge cases", () => {
